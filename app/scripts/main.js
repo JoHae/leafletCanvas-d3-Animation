@@ -34,11 +34,12 @@ var Main = function () {
 
   var lineNo = new LineNoAnimation(tracks);
   var lineNoGeoPath = new LineNoAnimationGeoPath(collection);
-  var lineBasic = new LineBasicAnimation(tracks);
+  var pathTravel = new PathTravelAnimation(tracks);
+  var pathTravelLinear = new PathTravelAnimationLinearSpeed(tracks);
 
   L.canvasLayer()
-      .delegate(lineBasic)
-      .addTo(map);
+    .delegate(pathTravel)
+    .addTo(map);
 };
 
 new Main();

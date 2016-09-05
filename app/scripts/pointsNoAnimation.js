@@ -20,6 +20,5 @@ var PointsNoAnimation = function (tracks) {
         }
       }
     });
-
   }
 };

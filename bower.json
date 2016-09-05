@@ -1,5 +1,5 @@
 {
-  "name": "webapptest",
+  "name": "leaflet canvas d3 animations",
   "private": true,
   "dependencies": {
     "bootstrap-sass": "~3.3.5",

@@ -10,25 +10,6 @@ var Data = function() {
     {
       "id":"51c97d05e4b0fe5a04e9e733",
       "length":15.776292128036172,
-      "startTime":"2013-06-08T09:28:20.000Z",
-      "endTime":"2013-06-08T09:53:10.000Z",
-      "duration":1490,
-      "co2Avg":11.327073170731712,
-      "speedAvg":36.75609756097561,
-      "startPoint":{
-        "type":"Point",
-        "coordinates":[
-          7.61083,
-          51.9414
-        ]
-      },
-      "endPoint":{
-        "type":"Point",
-        "coordinates":[
-          7.61171,
-          51.9438
-        ]
-      },
       "geom":{
         "type":"LineString",
         "coordinates":[
@@ -1017,33 +998,11 @@ var Data = function() {
             51.9438
           ]
         ]
-      },
-      "numPoints":246,
-      "envirocarPoints":null,
-      "envirocarPointSummaries":null
+      }
     },
     {
       "id":"51c9bb64e4b0fe5a04eaba9c",
       "length":5.169918149921054,
-      "startTime":"2013-06-25T13:32:32.000Z",
-      "endTime":"2013-06-25T13:42:39.000Z",
-      "duration":607,
-      "co2Avg":0,
-      "speedAvg":29.831932773109244,
-      "startPoint":{
-        "type":"Point",
-        "coordinates":[
-          7.61104,
-          51.9413
-        ]
-      },
-      "endPoint":{
-        "type":"Point",
-        "coordinates":[
-          7.59595,
-          51.9729
-        ]
-      },
       "geom":{
         "type":"LineString",
         "coordinates":[
@@ -1524,10 +1483,7 @@ var Data = function() {
             51.9729
           ]
         ]
-      },
-      "numPoints":119,
-      "envirocarPoints":null,
-      "envirocarPointSummaries":null
+      }
     }
   ]
 

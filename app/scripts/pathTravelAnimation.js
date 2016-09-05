@@ -1,7 +1,7 @@
 /**
  * Created by Johannes on 04.09.2016.
  */
-var LineBasicAnimation = function (tracks) {
+var PathTravelAnimation = function (tracks) {
 
   var color = d3.scaleOrdinal(d3.schemeCategory10);
   var duration = 10000;
@@ -31,7 +31,6 @@ var LineBasicAnimation = function (tracks) {
         // From 1 to max index since we use -1 to determine the start point
         .range([1, points.length - 1]);
       timeToPointScales.push(timeToPointsScale);
-
     });
 
     var canvas = info.canvas;
@@ -43,17 +42,21 @@ var LineBasicAnimation = function (tracks) {
 
       function animate(t) {
         "use strict";
+
+        context.clearRect(0, 0, canvas.width, canvas.height);
+
         if (t >= duration) {
           timer.stop();
 
-          // Do ending stuff (e.g. draw point at final position
+          // Draw point at final position to ensure proper position at the end
+          tracksP.forEach(function (points, idx) {
+            drawPoint(ctx, points[points.length - 1]);
+          });
           return;
         }
-
         var scaledTime = timeScale(t);
 
         // For each track get the points
-        context.clearRect(0, 0, canvas.width, canvas.height);
         tracksP.forEach(function (points, idx) {
           var pointAtT = Math.round(timeToPointScales[idx](t));
           var pointStart = points[pointAtT - 1];
@@ -63,7 +66,7 @@ var LineBasicAnimation = function (tracks) {
           var newX = d3.interpolateNumber(pointStart.x, pointEnd.x)(scaledTime);
           var newY = d3.interpolateNumber(pointStart.y, pointEnd.y)(scaledTime);
 
-          drawPoint(ctx, {x: newX, y: newY});
+          drawPoint(ctx, {x: newX, y: newY, color: color(tracks[idx].id)});
         });
       }
     })(context);
@@ -71,7 +74,6 @@ var LineBasicAnimation = function (tracks) {
 
   function drawPoint(ctx, point) {
     "use strict";
-    ctx.globalAlpha = 0.7;
     ctx.fillStyle = point.color;
     ctx.beginPath();
     ctx.moveTo(point.x, point.y);
