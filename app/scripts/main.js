@@ -10,20 +10,35 @@ var Main = function () {
 
   var tracks = new Data().tracks;
 
-  console.log(tracks);
+  // Make a featurecollection
+  var collection = {};
+  collection.type = "FeatureCollection";
+  collection.features = [];
+  tracks.forEach(function (track) {
+    "use strict";
+    var feature = {};
+    feature.type = "Feature";
+    feature.geometry = track.geom;
+    feature.properties = {};
+    feature.properties.id = track.id;
 
+    collection.features.push(feature);
+  });
+
+  // SVG
+  //var svgGeoPath = new SvgGeoPathAsLine(collection, map);
+
+  // Canvas
   var pointNo = new PointsNoAnimation(tracks);
   var pointBasic = new PointsBasicAnimation(tracks);
+
   var lineNo = new LineNoAnimation(tracks);
+  var lineNoGeoPath = new LineNoAnimationGeoPath(collection);
   var lineBasic = new LineBasicAnimation(tracks);
 
   L.canvasLayer()
-    .delegate(lineBasic) // -- if we do not inherit from L.CanvasLayer  we can setup a delegate to receive events from L.CanvasLayer
-    .addTo(map);
-
-  // L.canvasLayer()
-  //    .delegate(no)
-  //    .addTo(map);
+      .delegate(lineBasic)
+      .addTo(map);
 };
 
 new Main();
