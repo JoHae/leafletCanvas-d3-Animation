@@ -4,7 +4,7 @@
 var PathTravelAnimation = function (tracks) {
 
   var color = d3.scaleOrdinal(d3.schemeCategory10);
-  var duration = 10000;
+  var duration = 5000;
   var timeScale = d3.scaleLinear()
     .domain([0, duration])
     .range([0, 1]);
@@ -21,6 +21,7 @@ var PathTravelAnimation = function (tracks) {
         var d = trackCoordinates[i];
         if (info.bounds.contains([d[1], d[0]])) {
           var dot = info.layer._map.latLngToContainerPoint([d[1], d[0]]);
+          dot.color = color(track.id);
           points.push(dot);
         }
       }
@@ -65,6 +66,7 @@ var PathTravelAnimation = function (tracks) {
           // Interpolate between
           var newX = d3.interpolateNumber(pointStart.x, pointEnd.x)(scaledTime);
           var newY = d3.interpolateNumber(pointStart.y, pointEnd.y)(scaledTime);
+
 
           drawPoint(ctx, {x: newX, y: newY, color: color(tracks[idx].id)});
         });
