@@ -4,12 +4,23 @@
 var PathTravelAnimation = function (tracks) {
 
   var color = d3.scaleOrdinal(d3.schemeCategory10);
-  var duration = 5000;
+  var duration = 10000;
   var timeScale = d3.scaleLinear()
     .domain([0, duration])
     .range([0, 1]);
+  var timer;
+
+  var currentTime = 0;
+  var lastTime = 0;
 
   this.onDrawLayer = function (info) {
+    // Check whether timer is running and stop
+    if(timer) {
+      timer.stop();
+      lastTime = currentTime;
+      console.log("Timer stopped at: " + lastTime);
+    }
+
     // Prepare data
     var tracksP = [];
     var timeToPointScales = [];
@@ -39,14 +50,15 @@ var PathTravelAnimation = function (tracks) {
 
     (function (ctx) {
       "use strict";
-      var timer = d3.timer(animate);
+      timer = d3.timer(animate);
 
       function animate(t) {
         "use strict";
+        currentTime = lastTime + t;
 
         context.clearRect(0, 0, canvas.width, canvas.height);
 
-        if (t >= duration) {
+        if (currentTime >= duration) {
           timer.stop();
 
           // Draw point at final position to ensure proper position at the end
@@ -55,11 +67,11 @@ var PathTravelAnimation = function (tracks) {
           });
           return;
         }
-        var scaledTime = timeScale(t);
+        var scaledTime = timeScale(currentTime);
 
         // For each track get the points
         tracksP.forEach(function (points, idx) {
-          var pointAtT = Math.round(timeToPointScales[idx](t));
+          var pointAtT = Math.round(timeToPointScales[idx](currentTime));
           var pointStart = points[pointAtT - 1];
           var pointEnd = points[pointAtT];
 

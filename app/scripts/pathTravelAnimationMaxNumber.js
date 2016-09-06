@@ -1,18 +1,23 @@
 /**
  * Created by Johannes on 04.09.2016.
  */
-var PathTravelAnimationMaxDuration = function (map, tracks) {
+var PathTravelAnimationMaxNumber = function (map, tracks, numberOfAnimatedTracks) {
   // The longest track should last
-  var duration = 10000;
+  var duration = 3000;
   var timer;
   var animatedTracks = Utils.prepareLengthBasedTracks(map, tracks);
 
   var currentTime = 0;
   var lastTime = 0;
 
+  var currentlyAnimatedIdxs = [];
+  for (var i = 0; i < numberOfAnimatedTracks; i++) {
+    currentlyAnimatedIdxs.push(i);
+  }
+
   this.onDrawLayer = function (info) {
     // Check whether timer is running and stop
-    if(timer) {
+    if (timer) {
       timer.stop();
       lastTime = currentTime;
       console.log("Timer stopped at: " + lastTime);
@@ -43,55 +48,70 @@ var PathTravelAnimationMaxDuration = function (map, tracks) {
     var context = canvas.getContext('2d');
     var renderTimes = [];
 
+    var lastPointsUsed = [];
+    tracksP.forEach(function () {
+      // We start at index 1
+      lastPointsUsed.push(1);
+    });
+
     (function (ctx) {
       "use strict";
       timer = d3.timer(animate);
-      var searchIndexStart = [];
-      tracksP.forEach(function (points, idx) {
-        searchIndexStart.push(1);
-      });
 
       function animate(t) {
         "use strict";
         var start = new Date();
 
-        currentTime = lastTime + t;
+        currentTime = (lastTime + t) % duration;
 
         context.clearRect(0, 0, canvas.width, canvas.height);
 
-        if (currentTime >= duration) {
-          timer.stop();
-
-          Utils.printRenderTime(renderTimes);
-
-          // Draw point at final position to ensure proper position at the end
-          tracksP.forEach(function (points, idx) {
-            drawPoint(ctx, points[points.length - 1], animatedTracks.tracks[idx].color);
-          });
-          return;
-        }
-
         var lengthWeShouldBe = timeToLengthScale(currentTime);
 
-        // For each track get the points
+        function setNewIndexDeleteOld(idx) {
+          "use strict";
+          var nextIdx = d3.max(currentlyAnimatedIdxs) + 1;
+          if (nextIdx < tracksP.length) {
+            currentlyAnimatedIdxs.push(nextIdx);
+          } else {
+            // Start from beginning
+            currentlyAnimatedIdxs.push(0);
+          }
+          // Delete track index from list
+          currentlyAnimatedIdxs.splice(currentlyAnimatedIdxs.indexOf(idx), 1);
+          lastPointsUsed[idx] = 1;
+        }
+
         tracksP.forEach(function (points, idx) {
+          // Is this track currently animated ?
+          if (currentlyAnimatedIdxs.indexOf(idx) === -1) {
+            return;
+          }
+
+          var lastStart = points[lastPointsUsed[idx] - 1];
+          // A track has reached its end if the last points do not fit into the current length we should be
+          if (lengthWeShouldBe < lastStart.distToStart) {
+            setNewIndexDeleteOld(idx);
+          }
+
           // If the length is greater than the last points distance to start we reached the end already
-          if(lengthWeShouldBe >= points[points.length - 1].distToStart) {
-            drawPoint(ctx, points[points.length - 1], animatedTracks.tracks[idx].color);
+          if (lengthWeShouldBe >= points[points.length - 1].distToStart) {
+            setNewIndexDeleteOld(idx);
             return;
           }
 
           var pointStart;
           var pointEnd;
-          for (var i = searchIndexStart[idx]; i < points.length; i++) {
+          for (var i = lastPointsUsed[idx]; i < points.length; i++) {
             if (lengthWeShouldBe <= points[i].distToStart) {
               // Found the points
               pointStart = points[i - 1];
               pointEnd = points[i];
-              searchIndexStart[idx] = i;
+              lastPointsUsed[idx] = i;
               break;
             }
           }
+
           var lengthNorm = (lengthWeShouldBe - pointStart.distToStart) / (pointEnd.distToStart - pointStart.distToStart);
 
           // Interpolate between

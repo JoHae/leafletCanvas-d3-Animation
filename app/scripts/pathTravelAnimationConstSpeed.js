@@ -7,11 +7,15 @@ var PathTravelAnimationConstSpeed = function (tracks) {
   var timer;
   var animatedTracks = Utils.prepareLengthBasedTracks(map, tracks);
 
+  var currentTime = 0;
+  var lastTime = 0;
+
   this.onDrawLayer = function (info) {
     // Check whether timer is running and stop
     if(timer) {
-      console.log("Timer exists. Stop.");
       timer.stop();
+      lastTime = currentTime;
+      console.log("Timer stopped at: " + lastTime);
     }
 
     // Prepare data
@@ -51,11 +55,13 @@ var PathTravelAnimationConstSpeed = function (tracks) {
 
       function animate(t) {
         "use strict";
+        currentTime = lastTime + t;
+
         var start = new Date();
 
         context.clearRect(0, 0, canvas.width, canvas.height);
 
-        if (t >= duration) {
+        if (currentTime >= duration) {
           timer.stop();
 
           Utils.printRenderTime(renderTimes);
@@ -70,7 +76,7 @@ var PathTravelAnimationConstSpeed = function (tracks) {
         // For each track get the points
         tracksP.forEach(function (points, idx) {
           // ~~ is equivalent to Math.floor
-          var lengthWeShouldBe = timeToLengthScales[idx](t);
+          var lengthWeShouldBe = timeToLengthScales[idx](currentTime);
 
           var pointStart;
           var pointEnd;
