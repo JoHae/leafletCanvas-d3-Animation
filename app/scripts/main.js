@@ -35,10 +35,11 @@ var Main = function () {
   var lineNo = new LineNoAnimation(tracks);
   var lineNoGeoPath = new LineNoAnimationGeoPath(collection);
   var pathTravel = new PathTravelAnimation(tracks);
-  var pathTravelLinear = new PathTravelAnimationConstSpeed(tracks);
+  var pathTravelConst = new PathTravelAnimationConstSpeed(tracks);
+  var pathTravelNoDuration = new PathTravelAnimationMaxDuration(map, tracks);
 
   L.canvasLayer()
-    .delegate(pathTravelLinear)
+    .delegate(pathTravelConst)
     .addTo(map);
 };
 

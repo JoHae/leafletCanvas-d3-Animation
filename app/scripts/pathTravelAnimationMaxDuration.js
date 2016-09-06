@@ -1,9 +1,9 @@
 /**
  * Created by Johannes on 04.09.2016.
  */
-var PathTravelAnimationConstSpeed = function (tracks) {
-
-  var duration = 5000;
+var PathTravelAnimationMaxDuration = function (map, tracks) {
+  // The longest track should last
+  var duration = 10000;
   var timer;
   var animatedTracks = Utils.prepareLengthBasedTracks(map, tracks);
 
@@ -14,14 +14,13 @@ var PathTravelAnimationConstSpeed = function (tracks) {
       timer.stop();
     }
 
-    // Prepare data
+    // Prepare data -- calculate container point positions
     var tracksP = [];
-    var timeToLengthScales = [];
+    var maxLength = animatedTracks.maxLength;
     animatedTracks.tracks.forEach(function (track, idx) {
       "use strict";
       var points = track.points;
       var newPoints = [];
-      var currentLength = points[points.length-1].distToStart;
       for (var i = 0; i < points.length; i++) {
         var d = points[i].point;
         var dot = info.layer._map.latLngToContainerPoint([d[1], d[0]]);
@@ -29,13 +28,12 @@ var PathTravelAnimationConstSpeed = function (tracks) {
         newPoints.push(dot);
       }
       tracksP.push(newPoints);
-
-      var timeToLengthScale = d3.scaleLinear()
-        .domain([0, duration])
-        // Length of the tracks in meters
-        .range([0, currentLength]);
-      timeToLengthScales.push(timeToLengthScale);
     });
+
+    var timeToLengthScale = d3.scaleLinear()
+      .domain([0, duration])
+      // Length of the tracks in meters
+      .range([0, maxLength]);
 
     var canvas = info.canvas;
     var context = canvas.getContext('2d');
@@ -67,10 +65,15 @@ var PathTravelAnimationConstSpeed = function (tracks) {
           return;
         }
 
+        var lengthWeShouldBe = timeToLengthScale(t);
+
         // For each track get the points
         tracksP.forEach(function (points, idx) {
-          // ~~ is equivalent to Math.floor
-          var lengthWeShouldBe = timeToLengthScales[idx](t);
+          // If the length is greater than the last points distance to start we reached the end already
+          if(lengthWeShouldBe >= points[points.length - 1].distToStart) {
+            drawPoint(ctx, points[points.length - 1], animatedTracks.tracks[idx].color);
+            return;
+          }
 
           var pointStart;
           var pointEnd;
