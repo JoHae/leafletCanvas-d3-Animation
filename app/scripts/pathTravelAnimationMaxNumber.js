@@ -1,19 +1,21 @@
 /**
  * Created by Johannes on 04.09.2016.
  */
-var PathTravelAnimationMaxNumber = function (map, tracks, numberOfAnimatedTracks) {
+var PathTravelAnimationMaxNumber = function (map, tracks) {
   // The longest track should last
   var duration = 3000;
   var timer;
-  var animatedTracks = Utils.prepareLengthBasedTracks(map, tracks);
+  var animatedTracks = Utils.prepareLengthBasedTracks(map, tracks, duration);
 
   var currentTime = 0;
   var lastTime = 0;
 
   var currentlyAnimatedIdxs = [];
+  var numberOfAnimatedTracks = 1;
   for (var i = 0; i < numberOfAnimatedTracks; i++) {
     currentlyAnimatedIdxs.push(i);
   }
+  var nextAnimationIndex = currentlyAnimatedIdxs.length;
 
   this.onDrawLayer = function (info) {
     // Check whether timer is running and stop
@@ -25,7 +27,6 @@ var PathTravelAnimationMaxNumber = function (map, tracks, numberOfAnimatedTracks
 
     // Prepare data -- calculate container point positions
     var tracksP = [];
-    var maxLength = animatedTracks.maxLength;
     animatedTracks.tracks.forEach(function (track, idx) {
       "use strict";
       var points = track.points;
@@ -33,16 +34,11 @@ var PathTravelAnimationMaxNumber = function (map, tracks, numberOfAnimatedTracks
       for (var i = 0; i < points.length; i++) {
         var d = points[i].point;
         var dot = info.layer._map.latLngToContainerPoint([d[1], d[0]]);
-        dot.distToStart = points[i].distToStart;
+        dot.time = points[i].time;
         newPoints.push(dot);
       }
       tracksP.push(newPoints);
     });
-
-    var timeToLengthScale = d3.scaleLinear()
-      .domain([0, duration])
-      // Length of the tracks in meters
-      .range([0, maxLength]);
 
     var canvas = info.canvas;
     var context = canvas.getContext('2d');
@@ -62,40 +58,40 @@ var PathTravelAnimationMaxNumber = function (map, tracks, numberOfAnimatedTracks
         "use strict";
         var start = new Date();
 
-        currentTime = (lastTime + t) % duration;
-
-        context.clearRect(0, 0, canvas.width, canvas.height);
-
-        var lengthWeShouldBe = timeToLengthScale(currentTime);
-
         function setNewIndexDeleteOld(idx) {
-          "use strict";
-          var nextIdx = d3.max(currentlyAnimatedIdxs) + 1;
-          if (nextIdx < tracksP.length) {
-            currentlyAnimatedIdxs.push(nextIdx);
-          } else {
-            // Start from beginning
-            currentlyAnimatedIdxs.push(0);
-          }
           // Delete track index from list
           currentlyAnimatedIdxs.splice(currentlyAnimatedIdxs.indexOf(idx), 1);
           lastPointsUsed[idx] = 1;
+
+          if (nextAnimationIndex >= tracksP.length) {
+            nextAnimationIndex = 0;
+          }
+          currentlyAnimatedIdxs.push(nextAnimationIndex);
+          nextAnimationIndex++;
         }
 
-        tracksP.forEach(function (points, idx) {
-          // Is this track currently animated ?
-          if (currentlyAnimatedIdxs.indexOf(idx) === -1) {
-            return;
+        currentTime = (lastTime + t) % duration;
+        context.clearRect(0, 0, canvas.width, canvas.height);
+
+         // Animate tracks
+        currentlyAnimatedIdxs.forEach(function (idx) {
+          var points = tracksP[idx];
+
+          var maxTimeTrack = points[points.length - 1].time;
+          var ct = currentTime;
+          if(ct > maxTimeTrack) {
+            // Scale it down
+            ct = currentTime % maxTimeTrack;
           }
 
           var lastStart = points[lastPointsUsed[idx] - 1];
-          // A track has reached its end if the last points do not fit into the current length we should be
-          if (lengthWeShouldBe < lastStart.distToStart) {
+          // A track has reached its end if the last points do not fit into the current time we should be
+          if (ct < lastStart.time) {
             setNewIndexDeleteOld(idx);
           }
 
           // If the length is greater than the last points distance to start we reached the end already
-          if (lengthWeShouldBe >= points[points.length - 1].distToStart) {
+          if (ct >= points[points.length - 1].time) {
             setNewIndexDeleteOld(idx);
             return;
           }
@@ -103,7 +99,7 @@ var PathTravelAnimationMaxNumber = function (map, tracks, numberOfAnimatedTracks
           var pointStart;
           var pointEnd;
           for (var i = lastPointsUsed[idx]; i < points.length; i++) {
-            if (lengthWeShouldBe <= points[i].distToStart) {
+            if (ct <= points[i].time) {
               // Found the points
               pointStart = points[i - 1];
               pointEnd = points[i];
@@ -112,11 +108,11 @@ var PathTravelAnimationMaxNumber = function (map, tracks, numberOfAnimatedTracks
             }
           }
 
-          var lengthNorm = (lengthWeShouldBe - pointStart.distToStart) / (pointEnd.distToStart - pointStart.distToStart);
+          var timeNorm = (ct - pointStart.time) / (pointEnd.time - pointStart.time);
 
           // Interpolate between
-          var newX = d3.interpolateNumber(pointStart.x, pointEnd.x)(lengthNorm);
-          var newY = d3.interpolateNumber(pointStart.y, pointEnd.y)(lengthNorm);
+          var newX = d3.interpolateNumber(pointStart.x, pointEnd.x)(timeNorm);
+          var newY = d3.interpolateNumber(pointStart.y, pointEnd.y)(timeNorm);
 
           drawPoint(ctx, {x: newX, y: newY}, animatedTracks.tracks[idx].color);
         });

@@ -26,13 +26,24 @@ Utils.printRenderTime = function (renderTimes) {
   console.log("Render Time (max): " + max + " at iteration: " + maxI + "/" + renderTimes.length);
 };
 
-Utils.prepareLengthBasedTracks = function(map, tracks) {
+Utils.prepareLengthBasedTracks = function (map, tracks, maxDuration) {
   "use strict";
-  var color = d3.scaleOrdinal(d3.schemeCategory10);
-  var animatedTracks = {};
-  animatedTracks.maxLength = 0;
-  animatedTracks.tracks = [];
 
+  var maxLength = 0;
+  // Get max length
+  tracks.forEach(function (track, idx) {
+    if (track.length > maxLength) {
+      maxLength = track.length;
+    }
+  });
+
+  var color = d3.scaleOrdinal(d3.schemeCategory10);
+  var lengthToTimeScale = d3.scaleLinear()
+    .domain([0, maxLength * 1000]) // Length in meters
+    .range([0, maxDuration]); // seconds
+
+  var animatedTracks = {};
+  animatedTracks.tracks = [];
   tracks.forEach(function (track, idx) {
     "use strict";
     var trackCoordinates = track.geom.coordinates;
@@ -50,18 +61,14 @@ Utils.prepareLengthBasedTracks = function(map, tracks) {
         var latlng = L.latLng(d[1], d[0]);
         var latlngBefore = L.latLng(trackCoordinates[i - 1][1], trackCoordinates[i - 1][0]);
         currentLength += latlng.distanceTo(latlngBefore);
-        dot.distToStart = currentLength;
-      } else {
-        dot.distToStart = 0;
       }
-
-      if(currentLength > animatedTracks.maxLength) {
-        animatedTracks.maxLength = currentLength;
-      }
+      dot.time = lengthToTimeScale(currentLength);
 
       nTrack.points.push(dot);
     }
     animatedTracks.tracks.push(nTrack);
   });
+
+
   return animatedTracks;
 };
